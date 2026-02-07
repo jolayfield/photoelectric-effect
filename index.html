@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Photo Electric Effect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-BgS_XAKy.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DNm2U5Jr.css">
+</head>
+
+<body>
+  <div id="app">
+    <nav class="main-nav glass-panel">
+      <div class="nav-brand">QuantumChem</div>
+      <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Lectures</a></li>
+        <li><a href="#" class="active">Simulations</a></li>
+        <li><a href="#">Resources</a></li>
+      </ul>
+    </nav>
+
+    <div class="breadcrumb">
+      <a href="#">Home</a> &rsaquo; <a href="#">Simulations</a> &rsaquo; <span>Photoelectric Effect</span>
+    </div>
+
+    <header class="page-header">
+      <h1>The Photo Electric Effect</h1>
+    </header>
+
+    <main class="dashboard">
+      <aside class="controls-panel glass-panel">
+        <div class="control-group">
+          <label for="intensity">Light Intensity</label>
+          <input type="range" id="intensity" min="1" max="100" value="50">
+          <span class="value-display" id="intensity-val">50%</span>
+        </div>
+
+        <div class="control-group">
+          <label for="wavelength">Light Wavelength (Color)</label>
+          <input type="range" id="wavelength" min="250" max="850" value="500" step="5">
+          <div class="color-preview" id="color-preview"></div>
+          <span class="value-display" id="wavelength-val">500 nm</span>
+        </div>
+
+        <div class="control-group">
+          <label for="metal">Target Metal</label>
+          <select id="metal">
+            <option value="2.1">Cesium (2.1 eV)</option>
+            <option value="2.3">Sodium (2.3 eV)</option>
+            <option value="4.7">Copper (4.7 eV)</option>
+            <option value="5.1">Gold (5.1 eV)</option>
+          </select>
+        </div>
+
+        <div class="stats-group">
+          <div class="stat-item">
+            <span class="stat-label">Photon Energy</span>
+            <span class="stat-value" id="photon-energy">0.00 eV</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Work Function</span>
+            <span class="stat-value" id="work-function">2.10 eV</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Max. KE</span>
+            <span class="stat-value" id="max-ke">0.00 eV</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="simulation-container glass-panel">
+        <canvas id="sim-canvas"></canvas>
+        <div class="overlay-info">
+          <p>Adjust frequency to eject electrons.</p>
+        </div>
+      </section>
+
+      <section class="graph-panel glass-panel">
+        <canvas id="ke-freq-chart"></canvas>
+        <button id="reset-graph-btn" class="glass-btn">Reset Graph</button>
+      </section>
+
+    </main>
+
+    <footer class="glass-panel theory-panel">
+      <h2>Theory</h2>
+      <p>
+        The <strong>Photoelectric Effect</strong> occurs when light hits a material and ejects electrons.
+        Classically, light wave intensity should drive ejection. However, quantum mechanics shows light acts as
+        particles (<strong>photons</strong>).
+      </p>
+      <p class="formula">
+        $$ K_{max} = h\nu - \Phi $$
+      </p>
+      <p>
+        Electrons are only ejected if the photon energy (\(h\nu\)) exceeds the metal's <strong>Work Function</strong>
+        (\(\Phi\)).
+      </p>
+    </footer>
+  </div>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+
+</html>
