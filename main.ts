@@ -87,6 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const axisSelect = document.getElementById('graph-axis-select') as HTMLSelectElement;
+    if (axisSelect) {
+        axisSelect.addEventListener('change', () => {
+            const mode = axisSelect.value as 'wavelength' | 'frequency';
+            graph.setMode(mode);
+        });
+    }
+
     // Initial call
     updateUI();
 });
