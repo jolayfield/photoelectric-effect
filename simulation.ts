@@ -4,6 +4,7 @@ interface Photon {
     y: number;
     dy: number;
     color: string;
+    energy: number; // Store energy at creation to prevent mismatches when slider changes
 }
 
 interface Electron {
@@ -15,6 +16,9 @@ interface Electron {
 }
 
 export class Simulation {
+    // ... existing properties ...
+
+
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
     width: number;
@@ -36,6 +40,7 @@ export class Simulation {
     // Visuals
     metalY: number = 0;
     plateWidth: number = 0;
+    lastTime: number = 0;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -131,41 +136,47 @@ export class Simulation {
                 x: Math.random() * this.plateWidth + (this.width - this.plateWidth) / 2,
                 y: 0,
                 dy: 5 + Math.random() * 2,
-                color: this.wavelengthToColor(this.wavelength)
+                color: this.wavelengthToColor(this.wavelength),
+                energy: this.hc_eV_nm / this.wavelength
             });
         }
     }
 
-    update(): void {
+
+    update(dtFactor: number): void {
         this.spawnPhoton();
 
         // Update Photons
         for (let i = this.photons.length - 1; i >= 0; i--) {
             let p = this.photons[i];
-            p.y += p.dy;
+            p.y += p.dy * dtFactor;
 
             // Hit metal
             if (p.y >= this.metalY) {
-                this.photons.splice(i, 1);
-                this.tryEmitElectron(p.x);
+                // Efficient removal: Swap with last and pop
+                this.photons[i] = this.photons[this.photons.length - 1];
+                this.photons.pop();
+
+                // Trigger logic
+                this.tryEmitElectron(p.x, p.energy);
             }
         }
 
         // Update Electrons
         for (let i = this.electrons.length - 1; i >= 0; i--) {
             let e = this.electrons[i];
-            e.y += e.dy;
-            e.x += e.dx;
+            e.y += e.dy * dtFactor;
+            e.x += e.dx * dtFactor;
 
             // Remove off screen
             if (e.y < 0 || e.x < 0 || e.x > this.width) {
-                this.electrons.splice(i, 1);
+                this.electrons[i] = this.electrons[this.electrons.length - 1];
+                this.electrons.pop();
             }
         }
     }
 
-    tryEmitElectron(x: number): void {
-        const energy = this.getPhotonEnergy();
+    tryEmitElectron(x: number, energy: number): void {
         if (energy > this.workFunction) {
             const ke = energy - this.workFunction;
             // Convert KE to speed
@@ -196,40 +207,64 @@ export class Simulation {
         this.ctx.fillText(`${this.metalName} (${this.workFunction} eV)`, this.width / 2, this.metalY + 40);
 
         // Draw Light Source
-        const color = this.wavelengthToColor(this.wavelength);
-        this.ctx.fillStyle = color;
+        const mainColor = this.wavelengthToColor(this.wavelength);
+        this.ctx.fillStyle = mainColor;
         this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = color;
+        this.ctx.shadowColor = mainColor;
         this.ctx.fillRect(0, 0, this.width, 5);
-        this.ctx.shadowBlur = 0;
+        this.ctx.shadowBlur = 0; // Reset
 
-        // Draw Photons 
-        this.photons.forEach(p => {
-            this.ctx.beginPath();
-            this.ctx.fillStyle = p.color;
-            this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = p.color;
-            this.ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.shadowBlur = 0;
-        });
+        // Draw Photons (Batched by Color)
+        // Grouping photons by color to minimize state changes
+        const photonsByColor: { [color: string]: Photon[] } = {};
+        for (const p of this.photons) {
+            if (!photonsByColor[p.color]) photonsByColor[p.color] = [];
+            photonsByColor[p.color].push(p);
+        }
 
-        // Draw Electrons
-        this.ctx.fillStyle = '#00f2ff';
-        this.electrons.forEach(e => {
-            this.ctx.beginPath();
-            this.ctx.arc(e.x, e.y, 4, 0, Math.PI * 2);
-            this.ctx.fill();
-            // Glow
+        for (const color in photonsByColor) {
+            this.ctx.fillStyle = color;
+            this.ctx.shadowColor = color;
             this.ctx.shadowBlur = 10;
+
+            this.ctx.beginPath();
+            for (const p of photonsByColor[color]) {
+                this.ctx.moveTo(p.x + 6, p.y);
+                this.ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            }
+            this.ctx.fill();
+        }
+        this.ctx.shadowBlur = 0; // Reset
+
+        // Draw Electrons (Batched)
+        if (this.electrons.length > 0) {
+            this.ctx.fillStyle = '#00f2ff';
+            this.ctx.strokeStyle = '#00f2ff'; // For stroke if needed
             this.ctx.shadowColor = '#00f2ff';
-            this.ctx.stroke();
+            this.ctx.shadowBlur = 10;
+
+            this.ctx.beginPath();
+            for (const e of this.electrons) {
+                this.ctx.moveTo(e.x + 4, e.y);
+                this.ctx.arc(e.x, e.y, 4, 0, Math.PI * 2);
+            }
+            this.ctx.fill();
+            // Removed stroke() to save perf, glow is enough or add back if needed
             this.ctx.shadowBlur = 0;
-        });
+        }
     }
 
-    loop(): void {
-        this.update();
+    loop(timestamp: number): void {
+        if (!this.lastTime) this.lastTime = timestamp;
+        const dt = timestamp - this.lastTime;
+        this.lastTime = timestamp;
+
+        // Cap dt to prevent huge jumps if tab was backgrounded
+        const safeDt = Math.min(dt, 100);
+        const targetFrameTime = 16.67; // 60fps
+        const dtFactor = safeDt / targetFrameTime;
+
+        this.update(dtFactor);
         this.draw();
         requestAnimationFrame(this.loop);
     }
