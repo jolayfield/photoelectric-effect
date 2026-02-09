@@ -189,7 +189,7 @@ export class KEGraph {
     }
 
 
-    update(frequencyTHz: number, workFunction: number) {
+    update(frequencyTHz: number, workFunction: number, color: string) {
         try {
             this.currentPhi = workFunction;
 
@@ -214,7 +214,6 @@ export class KEGraph {
             (scatterDataset.data as any[]).push(newPoint);
 
             // Color
-            const color = currentKE > 0 ? '#00f2ff' : '#ff073a';
             if (!Array.isArray(scatterDataset.backgroundColor)) {
                 scatterDataset.backgroundColor = [];
             }

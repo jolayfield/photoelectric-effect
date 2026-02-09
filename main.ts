@@ -37,10 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update Simulation
         sim.updateParams(wavelength, intensity, workFunc, metalName);
 
+        // Metal Colors
+        const metalColors: { [key: number]: string } = {
+            2.1: '#2196f3', // Cesium (Blue)
+            2.3: '#ffeb3b', // Sodium (Yellow)
+            4.7: '#ff5722', // Copper (Orange)
+            5.1: '#ffc107'  // Gold (Amber)
+        };
+        const pointColor = metalColors[workFunc] || '#00f2ff';
+
         // Update Graph
         // Need Frequency. Sim has helper? 
         const freq = sim.getFrequency();
-        graph.update(freq, workFunc);
+        graph.update(freq, workFunc, pointColor);
 
 
         // Update Text
