@@ -8,6 +8,7 @@ export default defineConfig({
             input: {
                 main: 'index.html',
                 simulation: 'simulation.html',
+                bohr: 'bohr.html',
             },
         },
     }
