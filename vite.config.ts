@@ -9,6 +9,8 @@ export default defineConfig({
                 main: 'index.html',
                 simulation: 'simulation.html',
                 bohr: 'bohr.html',
+                particlebox: 'particlebox.html',
+                barrier: 'barrier.html',
             },
             output: {
                 manualChunks: {
