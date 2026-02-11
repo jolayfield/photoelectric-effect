@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Particle in a Box - QuantumChem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+  <script type="module" crossorigin src="./assets/particlebox-C9CnkUwO.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/style-C8pZEPYV.js">
+  <link rel="stylesheet" crossorigin href="./assets/style-D1UaZ2Ic.css">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="main-nav glass-panel">
+            <div class="nav-brand">QuantumChem</div>
+            <ul class="nav-links">
+                <li><a href="./">Home</a></li>
+                <li><a href="simulation.html">Photoelectric</a></li>
+                <li><a href="bohr.html">Bohr Model</a></li>
+                <li><a href="particlebox.html" class="active">Particle Box</a></li>
+                <li><a href="barrier.html">Tunneling</a></li>
+            </ul>
+        </nav>
+
+        <div class="breadcrumb">
+            <a href="./">Home</a> &rsaquo; <span>Simulations</span> &rsaquo; <span>Particle in a Box</span>
+        </div>
+
+        <header class="page-header">
+            <h1>Particle in a Box</h1>
+        </header>
+
+        <main class="dashboard">
+            <aside class="controls-panel glass-panel">
+                <div class="control-group">
+                    <label for="quantum-n">Quantum Number (n)</label>
+                    <input type="range" id="quantum-n" min="1" max="8" value="1" step="1">
+                    <span class="value-display" id="quantum-n-val">n = 1</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Display Mode</label>
+                    <select id="display-mode">
+                        <option value="wavefunction">ψ(x, t) — Wave Function</option>
+                        <option value="probability">|ψ(x)|² — Probability Density</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="superposition-toggle"> Superposition Mode
+                    </label>
+                </div>
+
+                <div class="control-group" id="super-n2-group" style="display: none;">
+                    <label for="super-n2">Second State (n₂)</label>
+                    <input type="range" id="super-n2" min="1" max="8" value="2" step="1">
+                    <span class="value-display" id="super-n2-val">n₂ = 2</span>
+                </div>
+
+                <div class="stats-group">
+                    <div class="stat-item">
+                        <span class="stat-label">Energy E<sub>n</sub></span>
+                        <span class="stat-value" id="energy-val">1 E₁</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Nodes</span>
+                        <span class="stat-value" id="nodes-val">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Wavelength λ</span>
+                        <span class="stat-value" id="wavelength-val">2L</span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="simulation-container glass-panel">
+                <canvas id="pbox-canvas"></canvas>
+            </section>
+
+            <section class="graph-panel glass-panel" style="display: flex; flex-direction: column;">
+                <h3 style="margin-bottom: 1rem; color: var(--text-dim); font-size: 1rem;">Energy Level Diagram</h3>
+                <canvas id="energy-level-canvas" style="flex:1; width: 100%;"></canvas>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

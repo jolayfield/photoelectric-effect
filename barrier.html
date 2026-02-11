@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quantum Tunneling - QuantumChem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+  <script type="module" crossorigin src="./assets/barrier-D6F6yzlo.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/style-C8pZEPYV.js">
+  <link rel="stylesheet" crossorigin href="./assets/style-D1UaZ2Ic.css">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="main-nav glass-panel">
+            <div class="nav-brand">QuantumChem</div>
+            <ul class="nav-links">
+                <li><a href="./">Home</a></li>
+                <li><a href="simulation.html">Photoelectric</a></li>
+                <li><a href="bohr.html">Bohr Model</a></li>
+                <li><a href="particlebox.html">Particle Box</a></li>
+                <li><a href="barrier.html" class="active">Tunneling</a></li>
+            </ul>
+        </nav>
+
+        <div class="breadcrumb">
+            <a href="./">Home</a> &rsaquo; <span>Simulations</span> &rsaquo; <span>Quantum Tunneling</span>
+        </div>
+
+        <header class="page-header">
+            <h1>Scattering Through a Finite Barrier</h1>
+        </header>
+
+        <main class="dashboard">
+            <aside class="controls-panel glass-panel">
+                <div class="control-group">
+                    <label for="particle-energy">Particle Energy (E)</label>
+                    <input type="range" id="particle-energy" min="0.1" max="10" value="3.0" step="0.1">
+                    <span class="value-display" id="energy-val">3.0 eV</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="barrier-height">Barrier Height (V₀)</label>
+                    <input type="range" id="barrier-height" min="0.1" max="10" value="5.0" step="0.1">
+                    <span class="value-display" id="barrier-height-val">5.0 eV</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="barrier-width">Barrier Width (a)</label>
+                    <input type="range" id="barrier-width" min="0.1" max="2.0" value="0.5" step="0.05">
+                    <span class="value-display" id="barrier-width-val">0.50 nm</span>
+                </div>
+
+                <div class="stats-group">
+                    <div class="stat-item">
+                        <span class="stat-label">Transmission (T)</span>
+                        <span class="stat-value" id="transmission-val">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Reflection (R)</span>
+                        <span class="stat-value" id="reflection-val">1.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">E / V₀ Ratio</span>
+                        <span class="stat-value" id="ratio-val">0.60</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Regime</span>
+                        <span class="stat-value" id="regime-val">Tunneling</span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="simulation-container glass-panel">
+                <canvas id="barrier-canvas"></canvas>
+            </section>
+
+            <section class="graph-panel glass-panel" style="display: flex; flex-direction: column;">
+                <h3 style="margin-bottom: 1rem; color: var(--text-dim); font-size: 1rem;">Transmission vs Energy</h3>
+                <canvas id="t-graph-canvas" style="flex:1; width: 100%;"></canvas>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
