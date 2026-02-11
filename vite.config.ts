@@ -10,6 +10,11 @@ export default defineConfig({
                 simulation: 'simulation.html',
                 bohr: 'bohr.html',
             },
+            output: {
+                manualChunks: {
+                    'chart-vendor': ['chart.js/auto'],
+                },
+            },
         },
     }
 });
