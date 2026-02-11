@@ -8,11 +8,12 @@ export class BohrSimulation {
     n: number = 3; // Start at n=3
     targetN: number | null = null;
     transitionProgress: number = 0;
+    waitingForAbsorption: boolean = false; // New state for absorption
 
     electronAngle: number = 0;
-    electronSpeed: number = 0.02;
+    electronSpeed: number = 0.035; // Halfway speed
 
-    // Photons: { x, y, angle, speed, color, life, type: 'emission'|'absorption' }
+    // Photons: { x, y, vx, vy, color, life, totalLife, waviness, type: 'emission'|'absorption' }
     photons: any[] = [];
 
     // Constants
@@ -51,38 +52,92 @@ export class BohrSimulation {
     }
 
     transitionTo(finalN: number) {
-        if (this.targetN !== null) return; // Busy
+        if (this.targetN !== null || this.waitingForAbsorption) return; // Busy
         if (finalN === this.n) return;
 
-        // Emission (High -> Low)
+        this.targetN = finalN;
+
+        // Emission (High -> Low): Electron jumps immediately, photon emitted during/after? 
+        // Typically emission is instantaneous with jump.
         if (finalN < this.n) {
             this.emitPhoton(this.n, finalN);
+            this.transitionProgress = 0;
         }
 
-        // Absorption (Low -> High)
+        // Absorption (Low -> High): Photon comes in FIRST, then electron jumps.
         if (finalN > this.n) {
-            // Visualize incoming photon impacting?
-            // For now, just animate the jump
+            this.absorbPhoton(this.n, finalN);
+            this.waitingForAbsorption = true; // Wait for photon to hit
+            this.transitionProgress = 0;
         }
+    }
 
-        this.targetN = finalN;
-        this.transitionProgress = 0;
+    getPhotonColor(ni: number, nf: number): string {
+        const lower = Math.min(ni, nf);
+        const upper = Math.max(ni, nf);
+
+        if (lower === 1) return '#AA00FF'; // Lyman (UV)
+        if (lower === 2) {
+            // Balmer
+            if (upper === 3) return '#F44336'; // Red
+            if (upper === 4) return '#03A9F4'; // Cyan
+            if (upper === 5) return '#3F51B5'; // Blue
+            return '#673AB7'; // Violet
+        }
+        if (lower === 3) return '#D32F2F'; // Paschen (IR)
+        return '#FFFFFF'; // Unknown/Other
+    }
+
+    absorbPhoton(ni: number, nf: number) {
+        const color = this.getPhotonColor(ni, nf);
+        const r = this.getRadius(ni); // Target radius (current orbit)
+
+        // Calculate time to impact
+        // Photon speed = 3.5
+        // Distance from spawn to target
+        const spawnDist = Math.max(this.width, this.height) / 1.5;
+        const speed = 3.5;
+
+        // Time to travel from spawnDist to r
+        // dist = spawnDist - r
+        const distToTravel = spawnDist - r;
+        const framesToImpact = distToTravel / speed;
+
+        // Where will the electron be in framesToImpact?
+        // angular velocity = 0.035 / n
+        const angularVelocity = 0.035 / ni;
+        // Electron moves counter-clockwise (positive angle)
+        const futureAngle = this.electronAngle + angularVelocity * framesToImpact;
+
+        // Spawn point is at futureAngle, distance spawnDist
+        // We want it to come from OUTSIDE, so same angle as target but further out.
+        const sx = this.width / 2 + Math.cos(futureAngle) * spawnDist;
+        const sy = this.height / 2 + Math.sin(futureAngle) * spawnDist;
+
+        // Target point is at futureAngle, distance r (electron position at impact)
+        const tx = this.width / 2 + Math.cos(futureAngle) * r;
+        const ty = this.height / 2 + Math.sin(futureAngle) * r;
+
+        // Velocity vector pointing to target (inward)
+        const dx = tx - sx;
+        const dy = ty - sy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        this.photons.push({
+            x: sx,
+            y: sy,
+            vx: (dx / dist) * speed,
+            vy: (dy / dist) * speed,
+            color: color,
+            life: 1000,
+            totalLife: 1000,
+            waviness: 0,
+            type: 'absorption'
+        });
     }
 
     emitPhoton(ni: number, nf: number) {
-        // Determine color based on transition
-        // Lyman (to n=1): UV (Purple)
-        // Balmer (to n=2): Visible
-        // Paschen (to n=3): IR (Red)
-        let color = '#FFFFFF';
-        if (nf === 1) color = '#AA00FF'; // UV
-        else if (nf === 2) {
-            if (ni === 3) color = '#F44336'; // Red
-            else if (ni === 4) color = '#03A9F4'; // Cyan
-            else if (ni === 5) color = '#3F51B5'; // Blue
-            else color = '#673AB7'; // Violet
-        }
-        else if (nf === 3) color = '#D32F2F'; // IR
+        const color = this.getPhotonColor(ni, nf);
 
         // Spawn at electron position
         const radius = this.getRadius(this.n);
@@ -91,26 +146,28 @@ export class BohrSimulation {
 
         // Shoot outwards from center
         const angle = Math.atan2(ey - this.height / 2, ex - this.width / 2);
+        const speed = 3.5; // Halfway speed
 
         this.photons.push({
             x: ex,
             y: ey,
-            vx: Math.cos(angle) * 5,
-            vy: Math.sin(angle) * 5,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
             color: color,
-            life: 100,
-            waviness: 0
+            life: 200,
+            totalLife: 200,
+            waviness: 0,
+            type: 'emission'
         });
     }
 
     update() {
         // Orbit
-        // v ~ 1/n
-        // angle += baseSpeed / currentN
         let currentEffectiveN = this.n;
 
-        if (this.targetN !== null) {
-            this.transitionProgress += 0.02; // speed of jump
+        // If waiting for absorption, we don't transition n yet.
+        if (this.targetN !== null && !this.waitingForAbsorption) {
+            this.transitionProgress += 0.015; // Halfway speed
 
             // Lerp N for drawing radius
             const t = this.easeInOutQuad(this.transitionProgress);
@@ -123,16 +180,32 @@ export class BohrSimulation {
             }
         }
 
-        this.electronAngle += 0.05 / currentEffectiveN;
+        this.electronAngle += 0.035 / currentEffectiveN; // Halfway speed
 
         // Photons
         for (let i = this.photons.length - 1; i >= 0; i--) {
             const p = this.photons[i];
             p.x += p.vx;
             p.y += p.vy;
-            p.life--;
-            p.waviness += 0.5;
-            if (p.life <= 0) this.photons.splice(i, 1);
+            p.waviness += 0.35; // Slightly faster waviness too
+
+            if (p.type === 'emission') {
+                p.life--;
+                if (p.life <= 0) this.photons.splice(i, 1);
+            } else if (p.type === 'absorption') {
+                // Check collision with center/orbit
+                const dx = p.x - this.width / 2;
+                const dy = p.y - this.height / 2;
+                const d = Math.sqrt(dx * dx + dy * dy);
+                const r = this.getRadius(this.n);
+
+                // If photon reaches the orbit radius
+                if (d <= r) {
+                    // Trigger jump!
+                    this.waitingForAbsorption = false;
+                    this.photons.splice(i, 1);
+                }
+            }
         }
     }
 
@@ -146,14 +219,18 @@ export class BohrSimulation {
         for (let i = 1; i <= 6; i++) {
             const r = this.getRadius(i);
             this.ctx.beginPath();
-            this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-            if (i === this.targetN || i === this.n) this.ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            if (i === this.targetN || i === this.n) this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+
+            // Handle if we are waiting for absorption (highlight target)
+            if (this.waitingForAbsorption && i === this.targetN) this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+
             this.ctx.lineWidth = 1;
             this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
             this.ctx.stroke();
 
             // Label
-            this.ctx.fillStyle = '#aaa';
+            this.ctx.fillStyle = '#666';
             this.ctx.font = '10px Arial';
             this.ctx.fillText(`n=${i}`, cx + 5, cy - r);
         }
@@ -170,7 +247,7 @@ export class BohrSimulation {
         // Draw Electron
         // Radius depends on transition state
         let r = this.getRadius(this.n);
-        if (this.targetN !== null) {
+        if (this.targetN !== null && !this.waitingForAbsorption) {
             const t = this.easeInOutQuad(this.transitionProgress);
             const r1 = this.getRadius(this.n);
             const r2 = this.getRadius(this.targetN);
@@ -192,14 +269,16 @@ export class BohrSimulation {
         this.photons.forEach(p => {
             this.ctx.beginPath();
             this.ctx.strokeStyle = p.color;
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = 3;
             this.ctx.shadowColor = p.color;
-            this.ctx.shadowBlur = 5;
+            this.ctx.shadowBlur = 8;
+            this.ctx.lineCap = 'round';
 
-            // Draw a small sine wave segment at (p.x, p.y)
-            // rotated by velocity angle
+            // Draw a sine wave segment oriented along velocity
             const angle = Math.atan2(p.vy, p.vx);
-            const packetLen = 20;
+            const packetLen = 40; // Longer packet
+            const freq = 0.4;
+            const amp = 6;
 
             this.ctx.save();
             this.ctx.translate(p.x, p.y);
@@ -207,8 +286,14 @@ export class BohrSimulation {
 
             this.ctx.moveTo(-packetLen / 2, 0);
             for (let x = -packetLen / 2; x <= packetLen / 2; x += 2) {
-                // simple sine
-                const y = Math.sin((x + p.waviness * 5) * 0.5) * 5;
+                // Wave travels backwards along packet as p moves? Or stationary wave packet?
+                // Let's make it wiggle.
+                const phase = p.waviness;
+                // Envelope window (taper ends)
+                const distFromCenter = Math.abs(x);
+                const envelope = Math.max(0, 1 - distFromCenter / (packetLen / 2));
+
+                const y = Math.sin(x * freq - phase) * amp * envelope;
                 this.ctx.lineTo(x, y);
             }
 
