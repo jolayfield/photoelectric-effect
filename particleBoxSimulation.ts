@@ -5,7 +5,7 @@ export class ParticleBoxSimulation {
     height: number;
 
     // State
-    pinnedStates: number[] = [];
+    pinnedStates: { n: number, c: number }[] = [];
     previewN: number = 1;
     boxWidth: number = 1.0; // nm (display units)
     showProbability: boolean = false;
@@ -152,17 +152,24 @@ export class ParticleBoxSimulation {
         ctx.font = 'bold 14px Merriweather';
         ctx.textAlign = 'center';
 
-        const combined = Array.from(new Set([...this.pinnedStates, this.previewN])).sort((a, b) => a - b);
+        // Create a list of all active states for drawing: pinned + preview
+        // preview coefficient is assumed to be 1.0 for visualization
+        const allStates = [...this.pinnedStates.map(s => ({ n: s.n, c: s.c }))];
+        if (!this.pinnedStates.some(s => s.n === this.previewN)) {
+            allStates.push({ n: this.previewN, c: 1.0 });
+        }
+        allStates.sort((a, b) => a.n - b.n);
+
         let title = "";
         if (this.showProbability) {
-            if (combined.length === 1) {
-                title = `|ψ${this.subscript(combined[0])}(x)|²`;
+            if (allStates.length === 1) {
+                title = `|ψ${this.subscript(allStates[0].n)}(x)|²`;
             } else {
                 title = `|Σ cₙψₙ|²`;
             }
         } else {
-            if (combined.length === 1) {
-                title = `ψ${this.subscript(combined[0])}(x, t)`;
+            if (allStates.length === 1) {
+                title = `ψ${this.subscript(allStates[0].n)}(x, t)`;
             } else {
                 title = `Re(Σ cₙψₙe^{-iωₙt})`;
             }
@@ -177,15 +184,20 @@ export class ParticleBoxSimulation {
 
     drawWavefunction(ctx: CanvasRenderingContext2D, numPoints: number, amplitude: number) {
         const boxW = this.boxRight - this.boxLeft;
-        const combined = Array.from(new Set([...this.pinnedStates, this.previewN])).sort((a, b) => a - b);
-        if (combined.length === 0) return;
 
-        const c = 1 / Math.sqrt(combined.length);
+        // Combine pinned states and preview
+        const allStates = [...this.pinnedStates.map(s => ({ n: s.n, c: s.c }))];
+        if (!this.pinnedStates.some(s => s.n === this.previewN)) {
+            allStates.push({ n: this.previewN, c: 1.0 });
+        }
+
+        if (allStates.length === 0) return;
+
+        // Normalization factor A = 1 / sqrt(sum |c_n|^2)
+        const sumSqC = allStates.reduce((acc, s) => acc + s.c * s.c, 0);
+        const norm = 1 / Math.sqrt(sumSqC);
 
         if (this.showProbability) {
-            // |ψ|² = |Σ c_n ψ_n e^{-iω_n t}|²
-            // Real part: Σ c_n ψ_n cos(ω_n t)
-            // Imaginary part: Σ c_n ψ_n sin(ω_n t)
             ctx.beginPath();
             ctx.moveTo(this.boxLeft, this.waveBaseline);
 
@@ -195,11 +207,12 @@ export class ParticleBoxSimulation {
 
                 let re = 0;
                 let im = 0;
-                for (const n of combined) {
-                    const psiVal = this.psi(n, frac);
-                    const omega = this.energy(n);
-                    re += c * psiVal * Math.cos(omega * this.time);
-                    im += c * psiVal * Math.sin(omega * this.time);
+                for (const state of allStates) {
+                    const psiVal = this.psi(state.n, frac);
+                    const omega = this.energy(state.n);
+                    const cn = state.c * norm;
+                    re += cn * psiVal * Math.cos(omega * this.time);
+                    im += cn * psiVal * Math.sin(omega * this.time);
                 }
 
                 const prob = re * re + im * im;
@@ -211,8 +224,8 @@ export class ParticleBoxSimulation {
             ctx.closePath();
 
             const grad = ctx.createLinearGradient(0, this.waveBaseline - amplitude, 0, this.waveBaseline);
-            const color = combined.length > 1 ? 'rgba(156, 39, 176, 0.4)' : 'rgba(61, 90, 254, 0.4)';
-            const colorLight = combined.length > 1 ? 'rgba(156, 39, 176, 0.05)' : 'rgba(61, 90, 254, 0.05)';
+            const color = allStates.length > 1 ? 'rgba(156, 39, 176, 0.4)' : 'rgba(61, 90, 254, 0.4)';
+            const colorLight = allStates.length > 1 ? 'rgba(156, 39, 176, 0.05)' : 'rgba(61, 90, 254, 0.05)';
             grad.addColorStop(0, color);
             grad.addColorStop(1, colorLight);
             ctx.fillStyle = grad;
@@ -226,29 +239,29 @@ export class ParticleBoxSimulation {
                 const x = this.boxLeft + frac * boxW;
                 let re = 0;
                 let im = 0;
-                for (const n of combined) {
-                    const psiVal = this.psi(n, frac);
-                    const omega = this.energy(n);
-                    re += c * psiVal * Math.cos(omega * this.time);
-                    im += c * psiVal * Math.sin(omega * this.time);
+                for (const state of allStates) {
+                    const psiVal = this.psi(state.n, frac);
+                    const omega = this.energy(state.n);
+                    const cn = state.c * norm;
+                    re += cn * psiVal * Math.cos(omega * this.time);
+                    im += cn * psiVal * Math.sin(omega * this.time);
                 }
                 const prob = re * re + im * im;
                 const y = this.waveBaseline - prob * amplitude;
                 ctx.lineTo(x, y);
             }
-            ctx.strokeStyle = combined.length > 1 ? '#9c27b0' : '#3d5afe';
+            ctx.strokeStyle = allStates.length > 1 ? '#9c27b0' : '#3d5afe';
             ctx.lineWidth = 2.5;
             ctx.stroke();
         } else {
-            // Re(ψ(x,t)) = Σ c_n ψ_n(x) cos(ω_n t)
             ctx.beginPath();
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
 
                 let val = 0;
-                for (const n of combined) {
-                    val += c * this.psi(n, frac) * Math.cos(this.energy(n) * this.time);
+                for (const state of allStates) {
+                    val += (state.c * norm) * this.psi(state.n, frac) * Math.cos(this.energy(state.n) * this.time);
                 }
 
                 const y = this.waveBaseline - val * amplitude;
@@ -256,38 +269,36 @@ export class ParticleBoxSimulation {
                 else ctx.lineTo(x, y);
             }
 
-            ctx.strokeStyle = combined.length > 1 ? '#9c27b0' : '#3d5afe';
+            ctx.strokeStyle = allStates.length > 1 ? '#9c27b0' : '#3d5afe';
             ctx.lineWidth = 2.5;
             ctx.stroke();
 
             // Positive/Negative fills
-            // Positive
             ctx.beginPath();
             ctx.moveTo(this.boxLeft, this.waveBaseline);
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
                 let val = 0;
-                for (const n of combined) {
-                    val += c * this.psi(n, frac) * Math.cos(this.energy(n) * this.time);
+                for (const state of allStates) {
+                    val += (state.c * norm) * this.psi(state.n, frac) * Math.cos(this.energy(state.n) * this.time);
                 }
                 const y = this.waveBaseline - val * amplitude;
                 ctx.lineTo(x, Math.min(y, this.waveBaseline));
             }
             ctx.lineTo(this.boxRight, this.waveBaseline);
             ctx.closePath();
-            ctx.fillStyle = combined.length > 1 ? 'rgba(156, 39, 176, 0.12)' : 'rgba(61, 90, 254, 0.12)';
+            ctx.fillStyle = allStates.length > 1 ? 'rgba(156, 39, 176, 0.12)' : 'rgba(61, 90, 254, 0.12)';
             ctx.fill();
 
-            // Negative
             ctx.beginPath();
             ctx.moveTo(this.boxLeft, this.waveBaseline);
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
                 let val = 0;
-                for (const n of combined) {
-                    val += c * this.psi(n, frac) * Math.cos(this.energy(n) * this.time);
+                for (const state of allStates) {
+                    val += (state.c * norm) * this.psi(state.n, frac) * Math.cos(this.energy(state.n) * this.time);
                 }
                 const y = this.waveBaseline - val * amplitude;
                 ctx.lineTo(x, Math.max(y, this.waveBaseline));

@@ -59,9 +59,26 @@
                         <button id="clear-states" class="btn btn-outline" style="width: 100%;">Clear
                             Superposition</button>
                     </div>
-                    <div id="active-states-display"
-                        style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-dim);">
-                        Active States: <span id="states-list">n=1</span>
+                    <div id="coefficients-container" style="margin-top: 1rem;">
+                        <table class="coefficients-table"
+                            style="width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden;">
+                            <thead style="background: var(--bg-dim);">
+                                <tr>
+                                    <th
+                                        style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--border-color);">
+                                        n</th>
+                                    <th
+                                        style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--border-color);">
+                                        Coeff (cₙ)</th>
+                                    <th
+                                        style="padding: 0.5rem; text-align: right; border-bottom: 2px solid var(--border-color);">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="coefficients-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
