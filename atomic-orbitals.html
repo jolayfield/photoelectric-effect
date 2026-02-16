@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Atomic Orbitals - QuantumChem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+  <script type="module" crossorigin src="./assets/orbitals-bzilMlal.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/style-BgzER3dT.js">
+  <link rel="modulepreload" crossorigin href="./assets/auto-render-WmSJQ-TS.js">
+  <link rel="stylesheet" crossorigin href="./assets/style-BbGpFOmM.css">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="main-nav glass-panel">
+            <div class="nav-brand">University of St. Thomas</div>
+            <ul class="nav-links">
+                <li><a href="./">Home</a></li>
+                <li><a href="lectures.html">Lectures</a></li>
+                <li><a href="simulations.html" class="active">Simulations</a></li>
+                <li><a href="#">Resources</a></li>
+            </ul>
+        </nav>
+
+        <div class="breadcrumb">
+            <a href="./">Home</a> &rsaquo; <a href="simulations.html">Simulations</a> <span>/</span> <span>Atomic
+                Orbitals</span>
+        </div>
+
+        <header class="page-header">
+            <h1>3D Atomic Orbitals</h1>
+            <p style="color: var(--text-dim); max-width: 800px; margin: 0.5rem auto;">Visualize the probability density
+                $|\psi|^2$ for Hydrogen-like atoms. Orbitals are rendered as 3D point clouds where point density
+                represents probability.</p>
+        </header>
+
+        <main class="dashboard">
+            <aside class="controls-panel glass-panel">
+                <div class="control-group">
+                    <label>Principal ($n$)</label>
+                    <input type="range" id="param-n" min="1" max="4" value="2" step="1">
+                    <span class="value-display" id="val-n">$n = 2$</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Angular ($l$)</label>
+                    <input type="range" id="param-l" min="0" max="1" value="1" step="1">
+                    <span class="value-display" id="val-l">$l = 1$</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Magnetic ($m_l$)</label>
+                    <input type="range" id="param-ml" min="-1" max="1" value="0" step="1">
+                    <span class="value-display" id="val-ml">$m_l = 0$</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Atomic Number ($Z$)</label>
+                    <input type="range" id="param-z" min="1" max="10" value="1" step="1">
+                    <span class="value-display" id="val-z">$Z = 1$ (Hydrogen)</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Visualization Mode</label>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button id="toggle-scatter" class="glass-btn active"
+                            style="flex: 1; font-size: 0.8em;">Scatter</button>
+                        <button id="toggle-surface" class="glass-btn" style="flex: 1; font-size: 0.8em;">90%
+                            Surface</button>
+                    </div>
+                </div>
+
+                <div class="stats-group">
+                    <div class="stat-item">
+                        <span class="stat-label">Orbital Type</span>
+                        <span class="stat-value" id="orbital-name">2p</span>
+                    </div>
+                    <div class="stat-item"
+                        style="flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-top: 0.5rem;">
+                        <span class="stat-label">Phase Legend</span>
+                        <div style="display: flex; gap: 1rem; font-size: 0.8em;">
+                            <span style="display: flex; align-items: center; gap: 4px;">
+                                <div style="width: 12px; height: 12px; background: #6699ff; border-radius: 2px;"></div>
+                                Positive (+)
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 4px;">
+                                <div style="width: 12px; height: 12px; background: #ff6666; border-radius: 2px;"></div>
+                                Negative (-)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-top: 2rem;">
+                    <button id="reset-camera" class="glass-btn" style="width: 100%;">Reset View</button>
+                </div>
+            </aside>
+
+            <section class="simulation-container glass-panel" id="canvas-container"
+                style="position: relative; min-height: 500px; padding: 0;">
+                <div id="three-container" style="width: 100%; height: 100%; border-radius: 12px; overflow: hidden;">
+                </div>
+                <div id="loading-overlay"
+                    style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; display: none;">
+                    Rendering...
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
