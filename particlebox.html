@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&display=swap"
         rel="stylesheet">
-  <script type="module" crossorigin src="./assets/particlebox-DEzUzAYt.js"></script>
+  <script type="module" crossorigin src="./assets/particlebox-mr61A1Ua.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/style-C8pZEPYV.js">
   <link rel="stylesheet" crossorigin href="./assets/style-D1UaZ2Ic.css">
 </head>
@@ -62,9 +62,26 @@
                         <button id="clear-states" class="btn btn-outline" style="width: 100%;">Clear
                             Superposition</button>
                     </div>
-                    <div id="active-states-display"
-                        style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-dim);">
-                        Active States: <span id="states-list">n=1</span>
+                    <div id="coefficients-container" style="margin-top: 1rem;">
+                        <table class="coefficients-table"
+                            style="width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden;">
+                            <thead style="background: var(--bg-dim);">
+                                <tr>
+                                    <th
+                                        style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--border-color);">
+                                        n</th>
+                                    <th
+                                        style="padding: 0.5rem; text-align: left; border-bottom: 2px solid var(--border-color);">
+                                        Coeff (cₙ)</th>
+                                    <th
+                                        style="padding: 0.5rem; text-align: right; border-bottom: 2px solid var(--border-color);">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="coefficients-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
