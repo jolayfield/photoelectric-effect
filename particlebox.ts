@@ -14,10 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const nInput = document.getElementById('quantum-n') as HTMLInputElement;
     const nVal = document.getElementById('quantum-n-val') as HTMLElement;
     const displayMode = document.getElementById('display-mode') as HTMLSelectElement;
-    const superToggle = document.getElementById('superposition-toggle') as HTMLInputElement;
-    const superN2Group = document.getElementById('super-n2-group') as HTMLElement;
-    const superN2Input = document.getElementById('super-n2') as HTMLInputElement;
-    const superN2Val = document.getElementById('super-n2-val') as HTMLElement;
+
+    // Superposition Controls
+    const addStateBtn = document.getElementById('add-state') as HTMLButtonElement;
+    const clearStatesBtn = document.getElementById('clear-states') as HTMLButtonElement;
+    const statesListEl = document.getElementById('states-list') as HTMLElement;
+
+    // Animation Controls
+    const animateBtn = document.getElementById('toggle-animate') as HTMLButtonElement;
+    const resetBtn = document.getElementById('reset-animate') as HTMLButtonElement;
 
     // Stats
     const energyValEl = document.getElementById('energy-val') as HTMLElement;
@@ -26,41 +31,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateUI = () => {
         const n = parseInt(nInput.value);
-        sim.n = n;
+        sim.previewN = n;
+
+        const combined = Array.from(new Set([...sim.pinnedStates, sim.previewN])).sort((a, b) => a - b);
+        const isSuperposition = combined.length > 1;
 
         // Display mode
         sim.showProbability = displayMode.value === 'probability';
 
-        // Superposition
-        sim.superpositionMode = superToggle.checked;
-        superN2Group.style.display = superToggle.checked ? 'flex' : 'none';
+        // Animation state
+        animateBtn.textContent = sim.isAnimating ? 'Pause' : 'Animate Wavefunction';
 
-        if (superToggle.checked) {
-            const n2 = parseInt(superN2Input.value);
-            sim.superN2 = n2;
-            superN2Val.textContent = `n₂ = ${n2}`;
-        }
+        // States list display
+        statesListEl.textContent = combined.map(s => `n=${s}${sim.pinnedStates.includes(s) ? '' : ' (preview)'}`).join(', ');
 
         // Update displays
         nVal.textContent = `n = ${n}`;
-        energyValEl.textContent = `${n * n} E₁`;
-        nodesValEl.textContent = `${n - 1}`;
-
-        // λ = 2L/n
-        if (n === 1) wavelengthValEl.textContent = '2L';
-        else if (n === 2) wavelengthValEl.textContent = 'L';
-        else wavelengthValEl.textContent = `2L/${n}`;
+        if (isSuperposition) {
+            energyValEl.textContent = 'Superposition';
+            nodesValEl.textContent = 'N/A';
+            wavelengthValEl.textContent = 'N/A';
+        } else {
+            energyValEl.textContent = `${n * n} E₁`;
+            nodesValEl.textContent = `${n - 1}`;
+            if (n === 1) wavelengthValEl.textContent = '2L';
+            else if (n === 2) wavelengthValEl.textContent = 'L';
+            else wavelengthValEl.textContent = `2L/${n}`;
+        }
 
         // Update energy diagram
-        energyDiagram.currentN = n;
+        energyDiagram.activeStates = combined;
         energyDiagram.draw();
     };
 
     // Event listeners
     nInput.addEventListener('input', updateUI);
+
     displayMode.addEventListener('change', updateUI);
-    superToggle.addEventListener('change', updateUI);
-    superN2Input.addEventListener('input', updateUI);
+
+    addStateBtn.addEventListener('click', () => {
+        const n = parseInt(nInput.value);
+        if (!sim.pinnedStates.includes(n)) {
+            sim.pinnedStates.push(n);
+            sim.pinnedStates.sort((a, b) => a - b);
+        }
+        updateUI();
+    });
+
+    clearStatesBtn.addEventListener('click', () => {
+        sim.pinnedStates = [];
+        updateUI();
+    });
+
+    animateBtn.addEventListener('click', () => {
+        sim.isAnimating = !sim.isAnimating;
+        updateUI();
+    });
+
+    resetBtn.addEventListener('click', () => {
+        sim.resetTime();
+        sim.isAnimating = false;
+        updateUI();
+    });
 
     // Init
     updateUI();

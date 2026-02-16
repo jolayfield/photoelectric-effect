@@ -50,15 +50,28 @@
                 </div>
 
                 <div class="control-group">
-                    <label>
-                        <input type="checkbox" id="superposition-toggle"> Superposition Mode
-                    </label>
+                    <label>Superposition</label>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button id="add-state" class="btn btn-secondary" style="flex: 1;">Add n to
+                            Superposition</button>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <button id="clear-states" class="btn btn-outline" style="width: 100%;">Clear
+                            Superposition</button>
+                    </div>
+                    <div id="active-states-display"
+                        style="margin-top: 0.75rem; font-size: 0.9rem; color: var(--text-dim);">
+                        Active States: <span id="states-list">n=1</span>
+                    </div>
                 </div>
 
-                <div class="control-group" id="super-n2-group" style="display: none;">
-                    <label for="super-n2">Second State (n₂)</label>
-                    <input type="range" id="super-n2" min="1" max="8" value="2" step="1">
-                    <span class="value-display" id="super-n2-val">n₂ = 2</span>
+                <div class="control-group">
+                    <label>Animation</label>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button id="toggle-animate" class="btn btn-primary" style="flex: 1;">Animate
+                            Wavefunction</button>
+                        <button id="reset-animate" class="btn btn-secondary" style="flex: 0 0 auto;">Reset</button>
+                    </div>
                 </div>
 
                 <div class="stats-group">

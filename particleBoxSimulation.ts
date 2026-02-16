@@ -5,15 +5,15 @@ export class ParticleBoxSimulation {
     height: number;
 
     // State
-    n: number = 1;
+    pinnedStates: number[] = [];
+    previewN: number = 1;
     boxWidth: number = 1.0; // nm (display units)
     showProbability: boolean = false;
-    superpositionMode: boolean = false;
-    superN2: number = 2; // second quantum number for superposition
 
     // Animation
     time: number = 0;
     lastTimestamp: number = 0;
+    isAnimating: boolean = false;
 
     // Layout
     boxLeft: number = 0;
@@ -69,9 +69,14 @@ export class ParticleBoxSimulation {
     }
 
     update(dt: number) {
+        if (!this.isAnimating) return;
         // Time evolution frequency scales with energy
         // ω_n = E_n / ℏ → for animation, proportional to n²
         this.time += dt * 0.003;
+    }
+
+    resetTime() {
+        this.time = 0;
     }
 
     draw() {
@@ -129,15 +134,11 @@ export class ParticleBoxSimulation {
         ctx.fillText('V = ∞', this.boxRight + 20, this.boxTop + 20);
         ctx.fillText('V = 0', this.boxLeft + boxW / 2, this.boxBottom + 20);
 
-        // Draw wave function or probability density
+        // Adjust scaling: probability density peaks are higher (up to 2*N) than Re(psi) (up to sqrt(2*N))
         const numPoints = 300;
-        const amplitude = boxH * 0.35; // max visual amplitude
+        const amplitude = this.showProbability ? boxH * 0.12 : boxH * 0.35;
 
-        if (this.superpositionMode) {
-            this.drawSuperposition(ctx, numPoints, amplitude);
-        } else {
-            this.drawSingleState(ctx, numPoints, amplitude);
-        }
+        this.drawWavefunction(ctx, numPoints, amplitude);
 
         // Draw x-axis labels
         ctx.fillStyle = '#636e72';
@@ -150,17 +151,23 @@ export class ParticleBoxSimulation {
         ctx.fillStyle = '#2d3436';
         ctx.font = 'bold 14px Merriweather';
         ctx.textAlign = 'center';
-        if (this.superpositionMode) {
-            ctx.fillText(
-                this.showProbability ? `|c₁ψ₁ + c₂ψ₂|²` : `Re(c₁ψ₁e^{-iω₁t} + c₂ψ₂e^{-iω₂t})`,
-                this.boxLeft + boxW / 2, this.boxTop - 15
-            );
+
+        const combined = Array.from(new Set([...this.pinnedStates, this.previewN])).sort((a, b) => a - b);
+        let title = "";
+        if (this.showProbability) {
+            if (combined.length === 1) {
+                title = `|ψ${this.subscript(combined[0])}(x)|²`;
+            } else {
+                title = `|Σ cₙψₙ|²`;
+            }
         } else {
-            ctx.fillText(
-                this.showProbability ? `|ψ${this.subscript(this.n)}(x)|²` : `ψ${this.subscript(this.n)}(x, t)`,
-                this.boxLeft + boxW / 2, this.boxTop - 15
-            );
+            if (combined.length === 1) {
+                title = `ψ${this.subscript(combined[0])}(x, t)`;
+            } else {
+                title = `Re(Σ cₙψₙe^{-iωₙt})`;
+            }
         }
+        ctx.fillText(title, this.boxLeft + boxW / 2, this.boxTop - 15);
     }
 
     subscript(n: number): string {
@@ -168,19 +175,34 @@ export class ParticleBoxSimulation {
         return subs[n] || `${n}`;
     }
 
-    drawSingleState(ctx: CanvasRenderingContext2D, numPoints: number, amplitude: number) {
+    drawWavefunction(ctx: CanvasRenderingContext2D, numPoints: number, amplitude: number) {
         const boxW = this.boxRight - this.boxLeft;
+        const combined = Array.from(new Set([...this.pinnedStates, this.previewN])).sort((a, b) => a - b);
+        if (combined.length === 0) return;
+
+        const c = 1 / Math.sqrt(combined.length);
 
         if (this.showProbability) {
-            // |ψ|² — time-independent for a single eigenstate
+            // |ψ|² = |Σ c_n ψ_n e^{-iω_n t}|²
+            // Real part: Σ c_n ψ_n cos(ω_n t)
+            // Imaginary part: Σ c_n ψ_n sin(ω_n t)
             ctx.beginPath();
             ctx.moveTo(this.boxLeft, this.waveBaseline);
 
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
-                const psiVal = this.psi(this.n, frac);
-                const prob = psiVal * psiVal;
+
+                let re = 0;
+                let im = 0;
+                for (const n of combined) {
+                    const psiVal = this.psi(n, frac);
+                    const omega = this.energy(n);
+                    re += c * psiVal * Math.cos(omega * this.time);
+                    im += c * psiVal * Math.sin(omega * this.time);
+                }
+
+                const prob = re * re + im * im;
                 const y = this.waveBaseline - prob * amplitude;
                 ctx.lineTo(x, y);
             }
@@ -188,10 +210,11 @@ export class ParticleBoxSimulation {
             ctx.lineTo(this.boxRight, this.waveBaseline);
             ctx.closePath();
 
-            // Gradient fill
             const grad = ctx.createLinearGradient(0, this.waveBaseline - amplitude, 0, this.waveBaseline);
-            grad.addColorStop(0, 'rgba(61, 90, 254, 0.4)');
-            grad.addColorStop(1, 'rgba(61, 90, 254, 0.05)');
+            const color = combined.length > 1 ? 'rgba(156, 39, 176, 0.4)' : 'rgba(61, 90, 254, 0.4)';
+            const colorLight = combined.length > 1 ? 'rgba(156, 39, 176, 0.05)' : 'rgba(61, 90, 254, 0.05)';
+            grad.addColorStop(0, color);
+            grad.addColorStop(1, colorLight);
             ctx.fillStyle = grad;
             ctx.fill();
 
@@ -201,148 +224,78 @@ export class ParticleBoxSimulation {
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
-                const psiVal = this.psi(this.n, frac);
-                const prob = psiVal * psiVal;
+                let re = 0;
+                let im = 0;
+                for (const n of combined) {
+                    const psiVal = this.psi(n, frac);
+                    const omega = this.energy(n);
+                    re += c * psiVal * Math.cos(omega * this.time);
+                    im += c * psiVal * Math.sin(omega * this.time);
+                }
+                const prob = re * re + im * im;
                 const y = this.waveBaseline - prob * amplitude;
                 ctx.lineTo(x, y);
             }
-            ctx.strokeStyle = '#3d5afe';
+            ctx.strokeStyle = combined.length > 1 ? '#9c27b0' : '#3d5afe';
             ctx.lineWidth = 2.5;
-            ctx.shadowColor = 'rgba(61, 90, 254, 0.5)';
-            ctx.shadowBlur = 8;
             ctx.stroke();
-            ctx.shadowBlur = 0;
         } else {
-            // ψ(x,t) = ψ_n(x) cos(ω_n t) — show real part oscillating
-            const omega = this.energy(this.n);
-            const cosT = Math.cos(omega * this.time);
-
-            // Draw the oscillating wave
+            // Re(ψ(x,t)) = Σ c_n ψ_n(x) cos(ω_n t)
             ctx.beginPath();
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
-                const psiVal = this.psi(this.n, frac) * cosT;
-                const y = this.waveBaseline - psiVal * amplitude * 0.5;
 
+                let val = 0;
+                for (const n of combined) {
+                    val += c * this.psi(n, frac) * Math.cos(this.energy(n) * this.time);
+                }
+
+                const y = this.waveBaseline - val * amplitude;
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             }
 
-            ctx.strokeStyle = '#3d5afe';
+            ctx.strokeStyle = combined.length > 1 ? '#9c27b0' : '#3d5afe';
             ctx.lineWidth = 2.5;
-            ctx.shadowColor = 'rgba(61, 90, 254, 0.5)';
-            ctx.shadowBlur = 8;
             ctx.stroke();
-            ctx.shadowBlur = 0;
 
-            // Fill positive/negative regions with different colors
-            // Positive (above baseline)
+            // Positive/Negative fills
+            // Positive
             ctx.beginPath();
             ctx.moveTo(this.boxLeft, this.waveBaseline);
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
-                const psiVal = this.psi(this.n, frac) * cosT;
-                const y = this.waveBaseline - psiVal * amplitude * 0.5;
+                let val = 0;
+                for (const n of combined) {
+                    val += c * this.psi(n, frac) * Math.cos(this.energy(n) * this.time);
+                }
+                const y = this.waveBaseline - val * amplitude;
                 ctx.lineTo(x, Math.min(y, this.waveBaseline));
             }
             ctx.lineTo(this.boxRight, this.waveBaseline);
             ctx.closePath();
-            ctx.fillStyle = 'rgba(61, 90, 254, 0.12)';
+            ctx.fillStyle = combined.length > 1 ? 'rgba(156, 39, 176, 0.12)' : 'rgba(61, 90, 254, 0.12)';
             ctx.fill();
 
-            // Negative (below baseline)
+            // Negative
             ctx.beginPath();
             ctx.moveTo(this.boxLeft, this.waveBaseline);
             for (let i = 0; i <= numPoints; i++) {
                 const frac = i / numPoints;
                 const x = this.boxLeft + frac * boxW;
-                const psiVal = this.psi(this.n, frac) * cosT;
-                const y = this.waveBaseline - psiVal * amplitude * 0.5;
+                let val = 0;
+                for (const n of combined) {
+                    val += c * this.psi(n, frac) * Math.cos(this.energy(n) * this.time);
+                }
+                const y = this.waveBaseline - val * amplitude;
                 ctx.lineTo(x, Math.max(y, this.waveBaseline));
             }
             ctx.lineTo(this.boxRight, this.waveBaseline);
             ctx.closePath();
             ctx.fillStyle = 'rgba(255, 64, 129, 0.12)';
             ctx.fill();
-        }
-    }
-
-    drawSuperposition(ctx: CanvasRenderingContext2D, numPoints: number, amplitude: number) {
-        const boxW = this.boxRight - this.boxLeft;
-        const n1 = this.n;
-        const n2 = this.superN2;
-        const c = 1 / Math.sqrt(2); // equal superposition
-
-        if (this.showProbability) {
-            // |ψ|² = |c₁ψ₁e^{-iω₁t} + c₂ψ₂e^{-iω₂t}|²
-            // = c²(ψ₁² + ψ₂² + 2ψ₁ψ₂cos((ω₂-ω₁)t))
-            const dOmega = this.energy(n2) - this.energy(n1);
-            const cosDt = Math.cos(dOmega * this.time);
-
-            ctx.beginPath();
-            ctx.moveTo(this.boxLeft, this.waveBaseline);
-
-            for (let i = 0; i <= numPoints; i++) {
-                const frac = i / numPoints;
-                const x = this.boxLeft + frac * boxW;
-                const psi1 = this.psi(n1, frac);
-                const psi2 = this.psi(n2, frac);
-                const prob = c * c * (psi1 * psi1 + psi2 * psi2 + 2 * psi1 * psi2 * cosDt);
-                const y = this.waveBaseline - prob * amplitude;
-                ctx.lineTo(x, y);
-            }
-            ctx.lineTo(this.boxRight, this.waveBaseline);
-            ctx.closePath();
-
-            const grad = ctx.createLinearGradient(0, this.waveBaseline - amplitude, 0, this.waveBaseline);
-            grad.addColorStop(0, 'rgba(156, 39, 176, 0.4)');
-            grad.addColorStop(1, 'rgba(156, 39, 176, 0.05)');
-            ctx.fillStyle = grad;
-            ctx.fill();
-
-            // Outline
-            ctx.beginPath();
-            ctx.moveTo(this.boxLeft, this.waveBaseline);
-            for (let i = 0; i <= numPoints; i++) {
-                const frac = i / numPoints;
-                const x = this.boxLeft + frac * boxW;
-                const psi1 = this.psi(n1, frac);
-                const psi2 = this.psi(n2, frac);
-                const prob = c * c * (psi1 * psi1 + psi2 * psi2 + 2 * psi1 * psi2 * cosDt);
-                const y = this.waveBaseline - prob * amplitude;
-                ctx.lineTo(x, y);
-            }
-            ctx.strokeStyle = '#9c27b0';
-            ctx.lineWidth = 2.5;
-            ctx.shadowColor = 'rgba(156, 39, 176, 0.5)';
-            ctx.shadowBlur = 8;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-        } else {
-            // Real part of superposition
-            const omega1 = this.energy(n1);
-            const omega2 = this.energy(n2);
-
-            ctx.beginPath();
-            for (let i = 0; i <= numPoints; i++) {
-                const frac = i / numPoints;
-                const x = this.boxLeft + frac * boxW;
-                const val = c * this.psi(n1, frac) * Math.cos(omega1 * this.time) +
-                    c * this.psi(n2, frac) * Math.cos(omega2 * this.time);
-                const y = this.waveBaseline - val * amplitude * 0.5;
-
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-
-            ctx.strokeStyle = '#9c27b0';
-            ctx.lineWidth = 2.5;
-            ctx.shadowColor = 'rgba(156, 39, 176, 0.5)';
-            ctx.shadowBlur = 8;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
         }
     }
 
@@ -362,7 +315,7 @@ export class ParticleBoxEnergyDiagram {
     ctx: CanvasRenderingContext2D;
     width: number;
     height: number;
-    currentN: number = 1;
+    activeStates: number[] = [1];
     maxN: number = 8;
 
     constructor(canvas: HTMLCanvasElement) {
@@ -410,33 +363,32 @@ export class ParticleBoxEnergyDiagram {
         // Draw energy levels
         for (let n = 1; n <= this.maxN; n++) {
             const y = this.getY(n);
+            const isActive = this.activeStates.includes(n);
 
             ctx.beginPath();
-            ctx.strokeStyle = n === this.currentN ? '#3d5afe' : '#ddd';
-            ctx.lineWidth = n === this.currentN ? 2.5 : 1;
+            ctx.strokeStyle = isActive ? '#9c27b0' : '#ddd';
+            ctx.lineWidth = isActive ? 2.5 : 1;
             ctx.moveTo(paddingLeft, y);
             ctx.lineTo(paddingLeft + lineWidth, y);
             ctx.stroke();
 
             // Label
-            ctx.fillStyle = n === this.currentN ? '#3d5afe' : '#999';
-            ctx.font = n === this.currentN ? 'bold 12px Arial' : '12px Arial';
+            ctx.fillStyle = isActive ? '#9c27b0' : '#999';
+            ctx.font = isActive ? 'bold 12px Arial' : '12px Arial';
             ctx.fillText(`n=${n}`, paddingLeft - 5, y);
 
             // Energy value (E_n = n² in units of E₁)
             ctx.textAlign = 'left';
             ctx.fillText(`${n * n} E₁`, paddingLeft + lineWidth + 5, y);
             ctx.textAlign = 'right';
-        }
 
-        // Draw current state marker
-        const cy = this.getY(this.currentN);
-        ctx.beginPath();
-        ctx.fillStyle = '#3d5afe';
-        ctx.shadowColor = 'rgba(61, 90, 254, 0.5)';
-        ctx.shadowBlur = 10;
-        ctx.arc(paddingLeft + lineWidth / 2, cy, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+            // Marker
+            if (isActive) {
+                ctx.beginPath();
+                ctx.fillStyle = '#9c27b0';
+                ctx.arc(paddingLeft + lineWidth / 2, y, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
     }
 }
