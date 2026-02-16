@@ -9,6 +9,7 @@ export class ParticleBoxSimulation {
     previewN: number = 1;
     boxWidth: number = 1.0; // nm (display units)
     showProbability: boolean = false;
+    animationSpeed: number = 1.0;
 
     // Animation
     time: number = 0;
@@ -69,10 +70,9 @@ export class ParticleBoxSimulation {
     }
 
     update(dt: number) {
-        if (!this.isAnimating) return;
-        // Time evolution frequency scales with energy
-        // ω_n = E_n / ℏ → for animation, proportional to n²
-        this.time += dt * 0.003;
+        if (this.isAnimating) {
+            this.time += dt * 0.001 * this.animationSpeed;
+        }
     }
 
     resetTime() {

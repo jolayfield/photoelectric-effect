@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // n column
             const nCell = document.createElement('td');
             nCell.style.padding = '0.5rem';
+            nCell.style.borderRight = '1px solid var(--border-color)';
             nCell.textContent = state.isPreview ? `n=${state.n} (preview)` : `n=${state.n}`;
             if (state.isPreview) nCell.style.color = 'var(--text-dim)';
             row.appendChild(nCell);
@@ -45,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // coefficient column
             const cCell = document.createElement('td');
             cCell.style.padding = '0.5rem';
+            cCell.style.borderRight = '1px solid var(--border-color)';
             if (state.isPreview) {
                 cCell.textContent = '1.0';
                 cCell.style.color = 'var(--text-dim)';
@@ -156,6 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sim.resetTime();
         sim.isAnimating = false;
         updateUI();
+    });
+
+    const speedInput = document.getElementById('animation-speed') as HTMLInputElement;
+    const speedVal = document.getElementById('speed-val') as HTMLElement;
+
+    speedInput.addEventListener('input', () => {
+        const val = parseFloat(speedInput.value);
+        sim.animationSpeed = val;
+        speedVal.textContent = val.toFixed(1);
     });
 
     // Init
