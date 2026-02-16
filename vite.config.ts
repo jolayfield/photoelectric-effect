@@ -7,10 +7,14 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 main: 'index.html',
-                simulation: 'simulation.html',
+                simulations: 'simulations.html',
+                photoelectric: 'photoelectric.html',
                 bohr: 'bohr.html',
                 particlebox: 'particlebox.html',
                 barrier: 'barrier.html',
+                lectures: 'lectures.html',
+                'lecture-view': 'lecture-view.html',
+                orbitals: 'atomic-orbitals.html',
             },
             output: {
                 manualChunks: {

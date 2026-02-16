@@ -1,3 +1,4 @@
+@import "katex/dist/katex.min.css";
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Lora:wght@400;700&display=swap');
 
 :root {
@@ -515,4 +516,64 @@ canvas {
   padding: 2rem 0;
   border-top: 1px solid var(--glass-border);
   font-size: 0.9rem;
+}
+/* Lectures Styles */
+.lectures-section, .lecture-view-section {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.lecture-links a:hover {
+    text-decoration: underline !important;
+}
+
+.lecture-container {
+    padding: 3rem;
+    margin-top: 2rem;
+    min-height: 60vh;
+}
+
+.lecture-actions {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Markdown Rendering Styles */
+.markdown-body {
+    line-height: 1.6;
+    color: var(--st-thomas-gray);
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+    color: var(--st-thomas-purple);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-body p {
+    margin-bottom: 1rem;
+}
+
+.markdown-body code {
+    background: rgba(0,0,0,0.05);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.markdown-body pre {
+    background: #2d2d2d;
+    color: #ccc;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
 }
