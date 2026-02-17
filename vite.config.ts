@@ -15,6 +15,7 @@ export default defineConfig({
                 lectures: 'lectures.html',
                 'lecture-view': 'lecture-view.html',
                 orbitals: 'atomic-orbitals.html',
+                'mo-scheme': 'mo-scheme.html',
             },
             output: {
                 manualChunks: {
