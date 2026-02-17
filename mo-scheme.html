@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diatomic MO Schemes - QuantumChem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Inter:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+  <script type="module" crossorigin src="./assets/mo-scheme-DaXhw19x.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/style-BgzER3dT.js">
+  <link rel="stylesheet" crossorigin href="./assets/style-BbGpFOmM.css">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="main-nav glass-panel">
+            <div class="nav-brand">University of St. Thomas</div>
+            <ul class="nav-links">
+                <li><a href="./">Home</a></li>
+                <li><a href="lectures.html">Lectures</a></li>
+                <li><a href="simulations.html" class="active">Simulations</a></li>
+                <li><a href="#">Resources</a></li>
+            </ul>
+        </nav>
+
+        <div class="breadcrumb">
+            <a href="./">Home</a> &rsaquo; <a href="simulations.html">Simulations</a> <span>/</span> <span>Diatomic MO
+                Schemes</span>
+        </div>
+
+        <header class="page-header">
+            <h1>Diatomic Molecular Orbital Schemes</h1>
+            <p style="color: var(--text-dim); max-width: 800px; margin: 0.5rem auto;">
+                Visualize the energy levels and electron distributions of diatomic molecules.
+                Select a molecule to explore its bonding, paramagnetism, and bond order.
+            </p>
+        </header>
+
+        <main class="dashboard">
+            <aside class="controls-panel glass-panel">
+                <div class="control-group">
+                    <label for="molecule-select">Select Molecule</label>
+                    <select id="molecule-select" class="glass-select">
+                        <option value="H2">H₂ (Hydrogen)</option>
+                        <option value="He2">He₂ (Helium)</option>
+                        <option value="Li2">Li₂ (Lithium)</option>
+                        <option value="Be2">Be₂ (Beryllium)</option>
+                        <option value="B2">B₂ (Boron)</option>
+                        <option value="C2">C₂ (Carbon)</option>
+                        <option value="N2">N₂ (Nitrogen)</option>
+                        <option value="O2" selected>O₂ (Oxygen)</option>
+                        <option value="F2">F₂ (Fluorine)</option>
+                        <option value="Ne2">Ne₂ (Neon)</option>
+                        <option value="HF">HF (Hydrogen Fluoride)</option>
+                        <option value="CO">CO (Carbon Monoxide)</option>
+                    </select>
+                </div>
+
+                <div class="stats-group">
+                    <h3>Molecular Properties</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Bond Order</span>
+                        <span class="stat-value" id="bond-order">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Magnetism</span>
+                        <span class="stat-value" id="magnetism">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">HOMO</span>
+                        <span class="stat-value" id="homo-label">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">LUMO</span>
+                        <span class="stat-value" id="lumo-label">-</span>
+                    </div>
+                </div>
+
+                <div class="info-panel glass-panel" style="margin-top: 2rem; font-size: 0.9em;">
+                    <h4>Theory Note</h4>
+                    <p id="theory-note">
+                        Molecular orbitals are formed by the linear combination of atomic orbitals. Electrons fill these
+                        orbitals according to the Aufbau principle, Hund's rule, and the Pauli exclusion principle.
+                    </p>
+                </div>
+            </aside>
+
+            <section class="simulation-container glass-panel" style="padding: 1rem;">
+                <canvas id="mo-canvas"
+                    style="width: 100%; height: 600px; background: #0a0a1a; border-radius: 8px;"></canvas>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
