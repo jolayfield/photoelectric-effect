@@ -7,12 +7,6 @@ export class EnergyDiagram {
     currentN: number = 3;
     targetN: number | null = null;
 
-    // Y-positions for levels n=1 to n=6
-    // E_n = -13.6 / n^2
-    // We want to map -13.6 (n=1) to bottom, 0 (n=inf) to top
-    // Scale: y = height * (1 - (E_n - E_1) / |E_1|) -> maybe too compressed?
-    // Let's just map 1/n^2 visually
-
     levels: number[] = [1, 2, 3, 4, 5, 6];
 
     constructor(canvas: HTMLCanvasElement) {
@@ -24,7 +18,6 @@ export class EnergyDiagram {
         this.width = canvas.width;
         this.height = canvas.height;
 
-        // Handle Resize
         this.handleResize();
         window.addEventListener('resize', () => this.handleResize());
     }
@@ -39,16 +32,24 @@ export class EnergyDiagram {
         }
     }
 
+    /**
+     * Visually-spaced Y positions.
+     * Uses sqrt scaling on -1/n² so levels are well separated
+     * even for higher n. Not numerically proportional to energy,
+     * but far more readable.
+     */
     getY(n: number): number {
-        // Energy is proportional to -1/n^2
-        // E1 = -1, E2 = -0.25, E3 = -0.11, ..., E_inf = 0
-        // Map E1 to bottom (height - padding), E_inf to top (padding)
-        const e = -1 / (n * n);
-        const minE = -1; // n=1
-        const maxE = 0;  // n=inf
+        const paddingTop = 35;
+        const paddingBot = 35;
+        const usable = this.height - paddingTop - paddingBot;
 
-        const normalize = (e - minE) / (maxE - minE); // 0 to 1
-        return this.height - 30 - (normalize * (this.height - 60));
+        // sqrt mapping: spread out the compressed upper levels
+        const e = -1 / (n * n);        // -1 … 0
+        const raw = (e - (-1)) / (0 - (-1)); // 0 (n=1) … 1 (n=∞)
+        const spread = Math.sqrt(raw);  // stretch upper levels
+
+        // bottom = n=1, top = n=∞
+        return this.height - paddingBot - spread * usable;
     }
 
     updateState(n: number, target: number | null) {
@@ -59,56 +60,93 @@ export class EnergyDiagram {
 
     draw() {
         this.ctx.clearRect(0, 0, this.width, this.height);
+        const ctx = this.ctx;
 
-        const paddingLeft = 50;
-        const width = this.width - 70;
+        const paddingLeft = 55;
+        const lineW = this.width - 80;
 
-        this.ctx.font = '12px Arial';
-        this.ctx.textAlign = 'right';
-        this.ctx.textBaseline = 'middle';
-
-        // Draw Levels
+        // ── Draw each energy level ──
         this.levels.forEach(n => {
             const y = this.getY(n);
+            const isActive = n === this.currentN;
+            const isTarget = n === (this.targetN ?? -1);
 
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = '#ccc';
-            this.ctx.lineWidth = 1;
-            this.ctx.moveTo(paddingLeft, y);
-            this.ctx.lineTo(paddingLeft + width, y);
-            this.ctx.stroke();
+            // Level line
+            ctx.beginPath();
+            ctx.strokeStyle = (isActive || isTarget) ? '#340E51' : '#bbb';
+            ctx.lineWidth = (isActive || isTarget) ? 2.5 : 1.2;
+            ctx.moveTo(paddingLeft, y);
+            ctx.lineTo(paddingLeft + lineW, y);
+            ctx.stroke();
 
-            // Label N
-            this.ctx.fillStyle = '#666';
-            this.ctx.fillText(`n=${n}`, paddingLeft - 5, y);
+            // n label (left)
+            ctx.fillStyle = (isActive || isTarget) ? '#340E51' : '#666';
+            ctx.font = (isActive || isTarget) ? 'bold 13px Lato, sans-serif' : '12px Lato, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`n=${n}`, paddingLeft - 8, y);
 
-            // Label Energy (approx)
+            // Energy label (right)
             const ev = -13.6 / (n * n);
-            this.ctx.fillText(`${ev.toFixed(2)} eV`, this.width - 5, y);
+            ctx.textAlign = 'left';
+            ctx.fillText(`${ev.toFixed(1)} eV`, paddingLeft + lineW + 8, y);
         });
 
-        // Draw Electron/State Marker
-        const y = this.getY(this.currentN);
-        this.ctx.beginPath();
-        this.ctx.fillStyle = '#2196F3'; // Blue dot
-        this.ctx.arc(paddingLeft + width / 2, y, 6, 0, Math.PI * 2);
-        this.ctx.fill();
+        // ── Electron marker on current level ──
+        const yC = this.getY(this.currentN);
+        ctx.beginPath();
+        ctx.fillStyle = '#2196F3';
+        ctx.arc(paddingLeft + lineW / 2, yC, 7, 0, Math.PI * 2);
+        ctx.fill();
+        // Glow ring
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(33,150,243,0.35)';
+        ctx.lineWidth = 3;
+        ctx.arc(paddingLeft + lineW / 2, yC, 11, 0, Math.PI * 2);
+        ctx.stroke();
 
-        // Draw Transition Arrow if happening
+        // ── Transition arrow ──
         if (this.targetN !== null) {
             const y1 = this.getY(this.currentN);
             const y2 = this.getY(this.targetN);
+            const arrowX = paddingLeft + lineW / 2 + 25;
+            const isEmission = this.targetN < this.currentN;
+            const color = isEmission ? '#E53935' : '#43A047';
 
-            // Draw arrow
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = this.targetN < this.currentN ? '#F44336' : '#4CAF50'; // Red emission, Green absorption
-            this.ctx.lineWidth = 2;
-            this.ctx.moveTo(paddingLeft + width / 2 + 20, y1);
-            this.ctx.lineTo(paddingLeft + width / 2 + 20, y2);
-            this.ctx.stroke();
+            // Arrow line
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.moveTo(arrowX, y1);
+            ctx.lineTo(arrowX, y2);
+            ctx.stroke();
 
             // Arrowhead
-            // ... (simple triangle at y2)
+            const headLen = 8;
+            const dir = y2 > y1 ? 1 : -1;
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.moveTo(arrowX, y2);
+            ctx.lineTo(arrowX - headLen * 0.6, y2 - dir * headLen);
+            ctx.lineTo(arrowX + headLen * 0.6, y2 - dir * headLen);
+            ctx.closePath();
+            ctx.fill();
+
+            // Label: ΔE
+            const deltaE = Math.abs(-13.6 / (this.targetN * this.targetN) - (-13.6 / (this.currentN * this.currentN)));
+            ctx.fillStyle = color;
+            ctx.font = 'bold 11px Lato, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${deltaE.toFixed(2)} eV`, arrowX + 8, (y1 + y2) / 2);
         }
+
+        // ── Title ──
+        ctx.fillStyle = '#636e72';
+        ctx.font = '11px Lato, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('E = −13.6 / n²  eV', this.width / 2, 5);
     }
 }
+
