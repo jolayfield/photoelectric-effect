@@ -16,6 +16,7 @@ export default defineConfig({
                 'lecture-view': 'lecture-view.html',
                 orbitals: 'atomic-orbitals.html',
                 'mo-scheme': 'mo-scheme.html',
+                particlebox2d: 'particlebox2d.html',
             },
             output: {
                 manualChunks: {

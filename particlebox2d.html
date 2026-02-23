@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2D Particle in a Box - QuantumChem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <nav class="main-nav glass-panel">
+            <div class="nav-brand">University of St. Thomas</div>
+            <ul class="nav-links">
+                <li><a href="./">Home</a></li>
+                <li><a href="lectures.html">Lectures</a></li>
+                <li><a href="simulations.html" class="active">Simulations</a></li>
+                <li><a href="#">Resources</a></li>
+            </ul>
+        </nav>
+
+        <div class="breadcrumb">
+            <a href="./">Home</a> &rsaquo; <a href="simulations.html">Simulations</a> <span>/</span>
+            <a href="particlebox.html">Particle in a Box</a> <span>/</span>
+            <span>2D Particle in a Box</span>
+        </div>
+
+        <header class="page-header">
+            <h1>2D Particle in a Box</h1>
+            <p style="color: var(--text-dim); margin-top: 0.5rem; font-size: 0.95rem;">
+                Contour plot of the 2D infinite square well wavefunction.
+                <a href="particlebox.html" class="text-link" style="margin-left: 0.5rem;">← Back to 1D version</a>
+            </p>
+        </header>
+
+        <main class="dashboard" style="grid-template-rows: 1fr;">
+            <aside class="controls-panel glass-panel">
+                <div class="control-group">
+                    <label for="quantum-nx">Quantum Number n<sub>x</sub></label>
+                    <input type="range" id="quantum-nx" min="1" max="8" value="1" step="1">
+                    <span class="value-display" id="nx-val">n<sub>x</sub> = 1</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="quantum-ny">Quantum Number n<sub>y</sub></label>
+                    <input type="range" id="quantum-ny" min="1" max="8" value="1" step="1">
+                    <span class="value-display" id="ny-val">n<sub>y</sub> = 1</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="box-lx">Box Width L<sub>x</sub></label>
+                    <input type="range" id="box-lx" min="0.5" max="3.0" value="1.0" step="0.1">
+                    <span class="value-display" id="lx-val">L<sub>x</sub> = 1.0</span>
+                </div>
+
+                <div class="control-group">
+                    <label for="box-ly">Box Height L<sub>y</sub></label>
+                    <input type="range" id="box-ly" min="0.5" max="3.0" value="1.0" step="0.1">
+                    <span class="value-display" id="ly-val">L<sub>y</sub> = 1.0</span>
+                </div>
+
+                <div class="control-group">
+                    <label>Display Mode</label>
+                    <select id="display-mode">
+                        <option value="wavefunction">ψ(x, y) — Wave Function</option>
+                        <option value="probability">|ψ(x, y)|² — Probability Density</option>
+                    </select>
+                </div>
+
+                <div class="stats-group">
+                    <div class="stat-item">
+                        <span class="stat-label">Energy E</span>
+                        <span class="stat-value" id="energy-val">2.0 E₁</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Nodal lines (x)</span>
+                        <span class="stat-value" id="nodes-x-val">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Nodal lines (y)</span>
+                        <span class="stat-value" id="nodes-y-val">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Degeneracy</span>
+                        <span class="stat-value" id="degeneracy-val">—</span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="simulation-container glass-panel" style="grid-row: 1 / -1;">
+                <canvas id="pbox2d-canvas"></canvas>
+            </section>
+        </main>
+    </div>
+    <script type="module" src="/particlebox2d.ts"></script>
+</body>
+
+</html>
